@@ -4,9 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Campaign Dashboard — Feature Checklist</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
- 
+
   :root {
     --bg: #ffffff;
     --bg-secondary: #f5f5f3;
@@ -29,7 +30,7 @@
     --red-text: #A32D2D;
     --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   }
- 
+
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #1c1c1a;
@@ -50,7 +51,7 @@
       --red-text: #F7C1C1;
     }
   }
- 
+
   body {
     font-family: var(--font);
     background: var(--bg-tertiary);
@@ -58,265 +59,153 @@
     min-height: 100vh;
     padding: 2rem 1rem;
   }
- 
-  .page {
-    max-width: 760px;
-    margin: 0 auto;
-  }
- 
-  header {
-    background: var(--bg);
+
+  .page { max-width: 760px; margin: 0 auto; }
+
+  .setup-banner {
+    background: #FAEEDA;
+    border: 1px solid #EF9F27;
     border-radius: var(--radius-lg);
-    border: 0.5px solid var(--border);
-    padding: 1.5rem 1.75rem;
+    padding: 1rem 1.25rem;
     margin-bottom: 1.25rem;
-  }
- 
-  header h1 {
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--text-primary);
-    letter-spacing: -0.02em;
-  }
- 
-  header p {
     font-size: 13px;
-    color: var(--text-secondary);
-    margin-top: 4px;
+    color: #633806;
+    line-height: 1.7;
   }
- 
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-top: 1.25rem;
-  }
- 
-  .stat {
-    background: var(--bg-secondary);
-    border-radius: var(--radius-md);
-    padding: 10px 14px;
-  }
- 
-  .stat-val {
-    font-size: 22px;
-    font-weight: 600;
-    color: var(--text-primary);
-    letter-spacing: -0.02em;
-  }
- 
-  .stat-val.green { color: var(--green-accent); }
- 
-  .stat-lbl {
-    font-size: 11px;
-    color: var(--text-secondary);
-    margin-top: 2px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
- 
-  .progress-bar {
-    height: 5px;
-    background: var(--bg-secondary);
-    border-radius: 3px;
-    margin-top: 1.25rem;
-    overflow: hidden;
-  }
- 
-  .progress-fill {
-    height: 100%;
-    background: var(--green-accent);
-    border-radius: 3px;
-    transition: width 0.35s ease;
-  }
- 
-  .progress-label {
+  .setup-banner strong { display: block; font-size: 14px; margin-bottom: 6px; }
+  .setup-banner code {
+    background: rgba(0,0,0,0.08);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: monospace;
     font-size: 12px;
-    color: var(--text-secondary);
-    margin-top: 6px;
   }
- 
-  .section {
-    background: var(--bg);
-    border-radius: var(--radius-lg);
-    border: 0.5px solid var(--border);
-    margin-bottom: 1rem;
-    overflow: hidden;
+  @media (prefers-color-scheme: dark) {
+    .setup-banner { background: #412402; border-color: #854F0B; color: #FAC775; }
+    .setup-banner code { background: rgba(255,255,255,0.1); }
   }
- 
-  .section-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 14px 18px;
-    border-bottom: 0.5px solid var(--border);
-    background: var(--bg-secondary);
-  }
- 
-  .section-icon {
-    width: 28px;
-    height: 28px;
-    border-radius: 7px;
-    background: var(--bg-tertiary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 15px;
-    flex-shrink: 0;
-  }
- 
-  .section-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-primary);
-    letter-spacing: -0.01em;
-  }
- 
-  .section-count {
-    margin-left: auto;
-    font-size: 11px;
-    color: var(--text-tertiary);
-    background: var(--bg-tertiary);
-    padding: 2px 8px;
-    border-radius: 20px;
-  }
- 
+
+  .sync-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-tertiary); margin-top: 8px; }
+  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-tertiary); flex-shrink: 0; transition: background 0.3s; }
+  .sync-dot.ok      { background: var(--green-accent); }
+  .sync-dot.error   { background: #E24B4A; }
+  .sync-dot.syncing { background: #EF9F27; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  header { background: var(--bg); border-radius: var(--radius-lg); border: 0.5px solid var(--border); padding: 1.5rem 1.75rem; margin-bottom: 1.25rem; }
+  header h1 { font-size: 20px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.02em; }
+  header p  { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 1.25rem; }
+  .stat  { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 10px 14px; }
+  .stat-val { font-size: 22px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.02em; }
+  .stat-val.green { color: var(--green-accent); }
+  .stat-lbl { font-size: 11px; color: var(--text-secondary); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .progress-bar  { height: 5px; background: var(--bg-secondary); border-radius: 3px; margin-top: 1.25rem; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--green-accent); border-radius: 3px; transition: width 0.35s ease; }
+  .progress-label { font-size: 12px; color: var(--text-secondary); margin-top: 6px; }
+
+  .section { background: var(--bg); border-radius: var(--radius-lg); border: 0.5px solid var(--border); margin-bottom: 1rem; overflow: hidden; }
+  .section-header { display: flex; align-items: center; gap: 8px; padding: 14px 18px; border-bottom: 0.5px solid var(--border); background: var(--bg-secondary); }
+  .section-icon  { width: 28px; height: 28px; border-radius: 7px; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .section-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+  .section-count { margin-left: auto; font-size: 11px; color: var(--text-tertiary); background: var(--bg-tertiary); padding: 2px 8px; border-radius: 20px; }
+
   .task {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 11px 18px;
-    border-bottom: 0.5px solid var(--border);
-    cursor: pointer;
-    transition: background 0.12s;
-    user-select: none;
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 11px 18px; border-bottom: 0.5px solid var(--border);
+    cursor: pointer; transition: background 0.12s; user-select: none;
   }
- 
   .task:last-child { border-bottom: none; }
   .task:hover { background: var(--bg-secondary); }
   .task.done .task-text { text-decoration: line-through; color: var(--text-tertiary); }
   .task.done .task-meta { opacity: 0.5; }
- 
-  .task input[type=checkbox] {
-    margin-top: 2px;
-    flex-shrink: 0;
-    width: 15px;
-    height: 15px;
-    cursor: pointer;
-    accent-color: var(--green-accent);
-  }
- 
+  .task input[type=checkbox] { margin-top: 2px; flex-shrink: 0; width: 15px; height: 15px; cursor: pointer; accent-color: var(--green-accent); }
   .task-body { flex: 1; min-width: 0; }
- 
-  .task-text {
-    font-size: 14px;
-    color: var(--text-primary);
-    line-height: 1.45;
-  }
- 
-  .task-meta {
-    display: flex;
-    gap: 5px;
-    flex-wrap: wrap;
-    margin-top: 5px;
-  }
- 
-  .badge {
-    font-size: 11px;
-    font-weight: 500;
-    padding: 2px 8px;
-    border-radius: 20px;
-  }
- 
-  .badge-green  { background: var(--green-bg);  color: var(--green-text); }
-  .badge-amber  { background: var(--amber-bg);  color: var(--amber-text); }
-  .badge-blue   { background: var(--blue-bg);   color: var(--blue-text); }
-  .badge-red    { background: var(--red-bg);    color: var(--red-text); }
-  .badge-gray   { background: var(--bg-secondary); color: var(--text-secondary); border: 0.5px solid var(--border-strong); }
- 
+  .task-text { font-size: 14px; color: var(--text-primary); line-height: 1.45; }
+  .task-meta { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+
+  .badge { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 20px; }
+  .badge-green { background: var(--green-bg); color: var(--green-text); }
+  .badge-amber { background: var(--amber-bg); color: var(--amber-text); }
+  .badge-blue  { background: var(--blue-bg);  color: var(--blue-text); }
+  .badge-red   { background: var(--red-bg);   color: var(--red-text); }
+  .badge-gray  { background: var(--bg-secondary); color: var(--text-secondary); border: 0.5px solid var(--border-strong); }
+
   .subtask {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 8px 18px 8px 44px;
-    border-bottom: 0.5px solid var(--border);
-    cursor: pointer;
-    transition: background 0.12s;
-    user-select: none;
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 8px 18px 8px 44px; border-bottom: 0.5px solid var(--border);
+    cursor: pointer; transition: background 0.12s; user-select: none;
     background: var(--bg-secondary);
   }
- 
   .subtask:last-child { border-bottom: none; }
   .subtask:hover { background: var(--bg-tertiary); }
   .subtask.done .task-text { text-decoration: line-through; color: var(--text-tertiary); }
- 
-  .subtask input[type=checkbox] {
-    margin-top: 1px;
-    flex-shrink: 0;
-    width: 13px;
-    height: 13px;
-    cursor: pointer;
-    accent-color: var(--green-accent);
-  }
- 
-  .subtask .task-text {
-    font-size: 13px;
-    color: var(--text-secondary);
-  }
- 
-  .filter-bar {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    margin-bottom: 1.25rem;
-  }
- 
+  .subtask input[type=checkbox] { margin-top: 1px; flex-shrink: 0; width: 13px; height: 13px; cursor: pointer; accent-color: var(--green-accent); }
+  .subtask .task-text { font-size: 13px; color: var(--text-secondary); }
+
+  .filter-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.25rem; }
   .filter-btn {
-    font-size: 12px;
-    font-family: var(--font);
-    padding: 5px 12px;
-    border-radius: 20px;
+    font-size: 12px; font-family: var(--font);
+    padding: 5px 12px; border-radius: 20px;
     border: 0.5px solid var(--border-strong);
-    background: var(--bg);
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all 0.12s;
+    background: var(--bg); color: var(--text-secondary);
+    cursor: pointer; transition: all 0.12s;
   }
- 
-  .filter-btn:hover { background: var(--bg-secondary); }
+  .filter-btn:hover  { background: var(--bg-secondary); }
   .filter-btn.active { background: var(--text-primary); color: var(--bg); border-color: var(--text-primary); }
 </style>
 </head>
 <body>
 <div class="page">
- 
+
+  <div class="setup-banner" id="setup-banner">
+    <strong>⚙️ Setup required — add your Supabase credentials</strong>
+    1. Open this file and find the two lines marked <code>REPLACE ME</code> near the bottom of the script.<br>
+    2. Replace <code>SUPABASE_URL</code> → your project URL (e.g. <code>https://abcdefgh.supabase.co</code>)<br>
+    3. Replace <code>SUPABASE_ANON_KEY</code> → your anon/public key (Settings → API)<br>
+    4. In Supabase → SQL Editor, run:<br>
+    <code>CREATE TABLE todo_state (key TEXT PRIMARY KEY, checked BOOLEAN NOT NULL DEFAULT false);</code><br>
+    5. Table Editor → todo_state → Authentication → disable RLS (or add anon policy for select/insert/update).<br>
+    This banner disappears automatically once connected.
+  </div>
+
   <header>
     <h1>Campaign Dashboard — Feature Checklist</h1>
     <p>Product spec &amp; development backlog</p>
     <div class="stats">
-      <div class="stat"><div class="stat-val" id="s-total">0</div><div class="stat-lbl">Total</div></div>
-      <div class="stat"><div class="stat-val green" id="s-done">0</div><div class="stat-lbl">Complete</div></div>
-      <div class="stat"><div class="stat-val" id="s-left">0</div><div class="stat-lbl">Remaining</div></div>
+      <div class="stat"><div class="stat-val" id="s-total">—</div><div class="stat-lbl">Total</div></div>
+      <div class="stat"><div class="stat-val green" id="s-done">—</div><div class="stat-lbl">Complete</div></div>
+      <div class="stat"><div class="stat-val" id="s-left">—</div><div class="stat-lbl">Remaining</div></div>
     </div>
     <div class="progress-bar"><div class="progress-fill" id="prog" style="width:0%"></div></div>
-    <p class="progress-label" id="prog-label">0 of 0 tasks complete</p>
+    <p class="progress-label" id="prog-label">Loading…</p>
+    <div class="sync-status">
+      <div class="sync-dot syncing" id="sync-dot"></div>
+      <span id="sync-label">Connecting to Supabase…</span>
+    </div>
   </header>
- 
+
   <div class="filter-bar">
     <button class="filter-btn active" data-filter="all">All</button>
     <button class="filter-btn" data-filter="pending">Pending</button>
     <button class="filter-btn" data-filter="done">Done</button>
   </div>
- 
+
   <div id="list"></div>
- 
 </div>
- 
+
 <script>
-const data = [
+const SUPABASE_URL      = 'https://dqswqxgkxchjofpwftmh.supabase.co'
+const SUPABASE_ANON_KEY = 'sb_publishable_R_iUL5NS5JhZq1gKfwYxiA_h5Z9DkbD';
+
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const TASKS = [
   {
-    section: "Metrics & ROI",
-    icon: "📊",
+    section: "Metrics & ROI", icon: "📊",
     tasks: [
       { text: "ROI colour coding", badges: ["ui"], subtasks: [
         { text: "Green: ROI > 30%" },
@@ -334,8 +223,7 @@ const data = [
     ]
   },
   {
-    section: "Data & IDs",
-    icon: "🗄️",
+    section: "Data & IDs", icon: "🗄️",
     tasks: [
       { text: "Rename field: id → campaign_id", badges: ["data", "schema"] },
       { text: "Exchange rate field — per month (new side tab)", badges: ["currency", "new tab"] },
@@ -344,8 +232,7 @@ const data = [
     ]
   },
   {
-    section: "Drilldown",
-    icon: "🔍",
+    section: "Drilldown", icon: "🔍",
     tasks: [
       { text: "Operator drilldown with cost per conversion", badges: ["feature"] },
       { text: "Payout history — payouts change throughout the month, must be visible", badges: ["feature", "important"] },
@@ -353,32 +240,28 @@ const data = [
     ]
   },
   {
-    section: "UX & Table",
-    icon: "🖥️",
+    section: "UX & Table", icon: "🖥️",
     tasks: [
       { text: "Scrollable table", badges: ["ui"] },
       { text: "Add rows for manual adjustments (with approvals) — for later", badges: ["ui", "later"] },
     ]
   },
   {
-    section: "Accounts & Alerts",
-    icon: "🔔",
+    section: "Accounts & Alerts", icon: "🔔",
     tasks: [
       { text: "Suspended accounts — show in report", badges: ["alert"] },
       { text: "Alerts for suspended accounts", badges: ["alert", "important"] },
     ]
   },
   {
-    section: "Auth & Logging",
-    icon: "🔐",
+    section: "Auth & Logging", icon: "🔐",
     tasks: [
       { text: "Google login / authentication", badges: ["auth"] },
       { text: "Audit log for all changes", badges: ["logging"] },
     ]
   },
   {
-    section: "Data Pipeline / Process",
-    icon: "⚙️",
+    section: "Data Pipeline / Process", icon: "⚙️",
     tasks: [
       { text: "Google MCC — download monthly report (last month, all campaigns, all ad groups)", badges: ["process"] },
       { text: "Excel: apply correct exchange rate per month", badges: ["process"] },
@@ -386,80 +269,112 @@ const data = [
     ]
   }
 ];
- 
+
 const badgeClass = {
   ui: "badge-blue", data: "badge-blue", schema: "badge-gray", currency: "badge-amber",
   feature: "badge-blue", important: "badge-red", later: "badge-gray",
   alert: "badge-red", auth: "badge-blue", logging: "badge-gray",
   process: "badge-gray", warning: "badge-amber", "new tab": "badge-green"
 };
- 
+
+const state = {};
 let allBoxes = [];
 let currentFilter = "all";
- 
+let connected = false;
+
+function setSyncStatus(status, label) {
+  document.getElementById("sync-dot").className = "sync-dot " + status;
+  document.getElementById("sync-label").textContent = label;
+}
+
+async function loadFromSupabase() {
+  if (SUPABASE_URL === 'REPLACE ME') {
+    setSyncStatus("error", "Not configured — using local storage fallback");
+    return false;
+  }
+  try {
+    setSyncStatus("syncing", "Loading saved state…");
+    const { data: rows, error } = await db.from("todo_state").select("key, checked");
+    if (error) throw error;
+    rows.forEach(r => { state[r.key] = r.checked; });
+    connected = true;
+    document.getElementById("setup-banner").style.display = "none";
+    setSyncStatus("ok", "Connected · changes sync automatically");
+    return true;
+  } catch (e) {
+    console.warn("Supabase:", e.message);
+    setSyncStatus("error", "Could not connect — using local storage fallback");
+    return false;
+  }
+}
+
+function loadLocalFallback() {
+  allBoxes.forEach(({ key }) => {
+    try { state[key] = localStorage.getItem("todo:" + key) === "1"; } catch(_) {}
+  });
+}
+
+async function saveState(key, checked) {
+  state[key] = checked;
+  if (connected) {
+    setSyncStatus("syncing", "Saving…");
+    try {
+      const { error } = await db.from("todo_state").upsert({ key, checked }, { onConflict: "key" });
+      if (error) throw error;
+      setSyncStatus("ok", "Saved · " + new Date().toLocaleTimeString());
+    } catch (e) {
+      setSyncStatus("error", "Save failed — " + e.message);
+    }
+  } else {
+    try { localStorage.setItem("todo:" + key, checked ? "1" : "0"); } catch(_) {}
+  }
+}
+
 function buildList() {
   const list = document.getElementById("list");
   list.innerHTML = "";
   allBoxes = [];
- 
-  data.forEach(sec => {
+
+  TASKS.forEach(sec => {
     const secDiv = document.createElement("div");
     secDiv.className = "section";
-    secDiv.dataset.section = sec.section;
- 
+
     const hdr = document.createElement("div");
     hdr.className = "section-header";
- 
-    const icon = document.createElement("div");
-    icon.className = "section-icon";
-    icon.textContent = sec.icon;
- 
-    const title = document.createElement("div");
-    title.className = "section-title";
-    title.textContent = sec.section;
- 
-    const count = document.createElement("span");
-    count.className = "section-count";
-    count.textContent = sec.tasks.length + " tasks";
- 
-    hdr.appendChild(icon);
-    hdr.appendChild(title);
-    hdr.appendChild(count);
+    hdr.innerHTML = `<div class="section-icon">${sec.icon}</div><div class="section-title">${sec.section}</div><span class="section-count">${sec.tasks.length} tasks</span>`;
     secDiv.appendChild(hdr);
- 
-    sec.tasks.forEach(task => {
-      const taskDiv = document.createElement("div");
-      taskDiv.className = "task";
- 
+
+    const addItem = (text, isSubtask, badges) => {
+      const el = document.createElement("div");
+      el.className = isSubtask ? "subtask" : "task";
+
       const cb = document.createElement("input");
       cb.type = "checkbox";
-      const state = loadState(task.text);
-      cb.checked = state;
-      if (state) taskDiv.classList.add("done");
- 
-      cb.addEventListener("change", () => {
-        taskDiv.classList.toggle("done", cb.checked);
-        saveState(task.text, cb.checked);
+      cb.checked = !!state[text];
+      if (cb.checked) el.classList.add("done");
+
+      cb.addEventListener("change", async () => {
+        el.classList.toggle("done", cb.checked);
+        await saveState(text, cb.checked);
         updateStats();
         applyFilter();
       });
- 
-      taskDiv.addEventListener("click", e => {
+
+      el.addEventListener("click", e => {
         if (e.target !== cb) { cb.checked = !cb.checked; cb.dispatchEvent(new Event("change")); }
       });
- 
+
       const body = document.createElement("div");
       body.className = "task-body";
- 
       const txt = document.createElement("div");
       txt.className = "task-text";
-      txt.textContent = task.text;
+      txt.textContent = text;
       body.appendChild(txt);
- 
-      if (task.badges && task.badges.length) {
+
+      if (badges && badges.length) {
         const meta = document.createElement("div");
         meta.className = "task-meta";
-        task.badges.forEach(b => {
+        badges.forEach(b => {
           const badge = document.createElement("span");
           badge.className = "badge " + (badgeClass[b] || "badge-gray");
           badge.textContent = b;
@@ -467,80 +382,41 @@ function buildList() {
         });
         body.appendChild(meta);
       }
- 
-      taskDiv.appendChild(cb);
-      taskDiv.appendChild(body);
-      secDiv.appendChild(taskDiv);
-      allBoxes.push({ el: taskDiv, cb });
- 
-      if (task.subtasks) {
-        task.subtasks.forEach(st => {
-          const stDiv = document.createElement("div");
-          stDiv.className = "subtask";
- 
-          const scb = document.createElement("input");
-          scb.type = "checkbox";
-          const sstate = loadState(st.text);
-          scb.checked = sstate;
-          if (sstate) stDiv.classList.add("done");
- 
-          scb.addEventListener("change", () => {
-            stDiv.classList.toggle("done", scb.checked);
-            saveState(st.text, scb.checked);
-            updateStats();
-            applyFilter();
-          });
- 
-          stDiv.addEventListener("click", e => {
-            if (e.target !== scb) { scb.checked = !scb.checked; scb.dispatchEvent(new Event("change")); }
-          });
- 
-          const stxt = document.createElement("div");
-          stxt.className = "task-text";
-          stxt.textContent = st.text;
- 
-          stDiv.appendChild(scb);
-          stDiv.appendChild(stxt);
-          secDiv.appendChild(stDiv);
-          allBoxes.push({ el: stDiv, cb: scb });
-        });
-      }
+
+      el.appendChild(cb);
+      el.appendChild(body);
+      secDiv.appendChild(el);
+      allBoxes.push({ el, cb, key: text });
+    };
+
+    sec.tasks.forEach(task => {
+      addItem(task.text, false, task.badges);
+      if (task.subtasks) task.subtasks.forEach(st => addItem(st.text, true, null));
     });
- 
+
     list.appendChild(secDiv);
   });
- 
-  updateStats();
-  applyFilter();
 }
- 
+
 function updateStats() {
   const total = allBoxes.length;
-  const done = allBoxes.filter(b => b.cb.checked).length;
-  const pct = total ? Math.round((done / total) * 100) : 0;
+  const done  = allBoxes.filter(b => b.cb.checked).length;
+  const pct   = total ? Math.round((done / total) * 100) : 0;
   document.getElementById("prog").style.width = pct + "%";
   document.getElementById("prog-label").textContent = done + " of " + total + " tasks complete (" + pct + "%)";
   document.getElementById("s-total").textContent = total;
-  document.getElementById("s-done").textContent = done;
-  document.getElementById("s-left").textContent = total - done;
+  document.getElementById("s-done").textContent  = done;
+  document.getElementById("s-left").textContent  = total - done;
 }
- 
+
 function applyFilter() {
   allBoxes.forEach(({ el, cb }) => {
-    if (currentFilter === "all") { el.style.display = ""; }
-    else if (currentFilter === "done") { el.style.display = cb.checked ? "" : "none"; }
-    else if (currentFilter === "pending") { el.style.display = !cb.checked ? "" : "none"; }
+    if (currentFilter === "all")          el.style.display = "";
+    else if (currentFilter === "done")    el.style.display = cb.checked  ? "" : "none";
+    else if (currentFilter === "pending") el.style.display = !cb.checked ? "" : "none";
   });
 }
- 
-function saveState(key, val) {
-  try { localStorage.setItem("todo:" + key, val ? "1" : "0"); } catch(e) {}
-}
- 
-function loadState(key) {
-  try { return localStorage.getItem("todo:" + key) === "1"; } catch(e) { return false; }
-}
- 
+
 document.querySelectorAll(".filter-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
@@ -549,8 +425,19 @@ document.querySelectorAll(".filter-btn").forEach(btn => {
     applyFilter();
   });
 });
- 
-buildList();
+
+(async () => {
+  const ok = await loadFromSupabase();
+  buildList();
+  if (!ok) loadLocalFallback();
+  // refresh checkboxes after local fallback loads
+  allBoxes.forEach(({ el, cb, key }) => {
+    cb.checked = !!state[key];
+    el.classList.toggle("done", cb.checked);
+  });
+  updateStats();
+  applyFilter();
+})();
 </script>
 </body>
 </html>
